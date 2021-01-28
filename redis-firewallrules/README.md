@@ -1,12 +1,16 @@
 # Redis Firewall Rules
 
 Deploys Redis firewall rules and denies creating incompliant firewall rules. The policies are wrapped in an [ARM template](redis-firewallrules.json) to ease deployment. Deploying the ARM template to a management group of choice should result in the following:
-- **Deny-Redis-FirewallRules** (*Policy definition*): Denies creating incompliant firewall rules.
-- **Deny-Redis-FirewallRules** (*Policy assignment*): Assigns policy definition _Deny-Redis-FirewallRules_ to the management group.
-- **Deploy-Redis-FirewallRule** (*Policy definition*): Deploys a single Redis firewall rule.
-- **Deploy-Redis-FirewallRules** (*Policy set definition*): Groups multiple instances of _Deploy-Redis-FirewallRule_ into a policy set to deploy multiple Redis firewall rules.
-- **Deploy-Redis-FirewallRules** (*Policy set assignment*): Assigns policy set definition _Deploy-Redis-FirewallRules_ to the management group.
-- **Deploy-Redis-FirewallRules** (*Role assignment*):  Role assignment for the managed identity created during policy set assignment _Deploy-Redis-FirewallRules_.
+- **Policy Definitions**
+  - **Deny-Redis-FirewallRules**: Denies creating incompliant firewall rules.
+  - **Deploy-Redis-FirewallRules**: Deploys a single Redis firewall rule.
+- **Policy Set Definitions**
+  - **Deploy-Redis-FirewallRules**: Groups multiple instances of _Deploy-Redis-FirewallRule_ into a policy set to deploy multiple Redis firewall rules.
+- **Policy Assignments**
+  - **Deny-Redis-FirewallRules**: Assigns policy definition _Deny-Redis-FirewallRules_ to the management group.
+  - **Deploy-Redis-FirewallRules**: Assigns policy set definition _Deploy-Redis-FirewallRules_ to the management group.
+- **Role Assignments**
+   - **Deploy-Redis-FirewallRules**: Role assignment for the managed identity created during policy assignment _Deploy-Redis-FirewallRules_.
 
 ## Try on Portal
 

@@ -251,7 +251,7 @@
                 "[resourceId('Microsoft.Authorization/policyDefinitions', 'Deploy-Redis-FirewallRule')]"
             ]
         },
-        // Policy set assignment 'Deploy-Redis-FirewallRule'
+        // policy assignment 'Deploy-Redis-FirewallRule'
         {
             "name": "[uniqueString('Deploy-Redis-FirewallRules')]",
             "type": "Microsoft.Authorization/policyAssignments",
@@ -277,21 +277,21 @@
                 "[resourceId('Microsoft.Authorization/policySetDefinitions', 'Deploy-Redis-FirewallRules')]"
             ]
         },
-        // Role assignment for managed identity created during policy set assignment 'Deploy-Redis-FirewallRules'.
+        // Role assignment for managed identity created during policy assignment 'Deploy-Redis-FirewallRules'.
         // Known issues:
-        // - Deployment fails with code 'PrincipalNotFound'. Basically, the the creation of the managed identity during policy set assignment did not finish in time. Just rerun the deployment.
-        // - Deployment fails with code 'RoleAssignmentUpdateNotPermitted'. Deleting the policy set assignment does not clean-up the role assignments. Just delete the role assignments for 'Redis Contributor' at the management group.
+        // - Deployment fails with code 'PrincipalNotFound'. Basically, the the creation of the managed identity during policy assignment did not finish in time. Just rerun the deployment.
+        // - Deployment fails with code 'RoleAssignmentUpdateNotPermitted'. Deleting the policy assignment does not clean-up the role assignments. Just delete the role assignments for 'Redis Contributor' at the management group.
         {
             "name": "[guid('Deploy-Redis-FirewallRules')]",
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2020-04-01-preview",
             "properties": {
                 "roleDefinitionId": "[variables('roleDefinitionId')]",
-                // Get the identifier of the managed identity created during policy set assignment 'Deploy-Redis-FirewallRules'.
+                // Get the identifier of the managed identity created during policy assignment 'Deploy-Redis-FirewallRules'.
                 "principalId": "[reference(uniqueString('Deploy-Redis-FirewallRules'), '2020-03-01', 'Full').identity.principalId]"
             },
             "dependsOn": [
-                // Depends on policy set assignment 'Deploy-Redis-FirewallRules', which should be created beforehand.
+                // Depends on policy assignment 'Deploy-Redis-FirewallRules', which should be created beforehand.
                 "[concat(variables('scope'), '/providers/Microsoft.Authorization/policyAssignments/', uniqueString('Deploy-Redis-FirewallRules'))]"
             ]
         }
