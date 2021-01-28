@@ -1,0 +1,300 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-08-01/managementGroupDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "managementGroup": {
+            "type": "string",
+            "metadata": {
+                "displayName": "Management Group",
+                "description": "The management group to scope the policy definitions, the policy set definition and the policy assignment."
+            }
+        },
+        "firewallRules": {
+            "type": "Array",
+            "metadata": {
+                "displayName": "Firewall Rules",
+                "description": "The list of allowed firewall rules."
+            }
+        }
+    },
+    "functions": [],
+    "variables": {
+        "scope": "[concat('/providers/Microsoft.Management/managementGroups/', parameters('managementGroup'))]",
+        // Built-in role 'Redis Contributor'.
+        "roleDefinitionId": "/providers/microsoft.authorization/roleDefinitions/e0f68234-74aa-48ed-b826-c38b57376e17"
+    },
+    "resources": [
+        // Policy definition 'Deny-Redis-FirewallRules'.
+        {
+            "name": "Deny-Redis-FirewallRules",
+            "type": "Microsoft.Authorization/policyDefinitions",
+            "apiVersion": "2020-03-01",
+            "properties": {
+                "policyType": "Custom",
+                "mode": "All",
+                "displayName": "Deny-Redis-FirewallRules",
+                "description": "Denies incompliant Redis firewall rules.",
+                "metadata": {
+                    "category": "Cache"
+                },
+                "parameters": {
+                    "firewallRules": {
+                        "type": "Array",
+                        "metadata": {
+                            "displayName": "Firewall Rules",
+                            "description": "The list of allowed firewall rules."
+                        }
+                    }
+                },
+                "policyRule": {
+                    "if": {
+                        "allOf": [
+                            {
+                                "anyOf": [
+                                    // Required to handle PATCH request for Microsoft.Cache/Redis.
+                                    {
+                                        "field": "type",
+                                        "equals": "Microsoft.Cache/Redis"
+                                    },
+                                    {
+                                        "field": "type",
+                                        "equals": "Microsoft.Cache/Redis/firewallRules"
+                                    }
+                                ]
+                            },
+                            {
+                                // Deny firewall rule if not within list of allowed firewall rules.
+                                "count": {
+                                    "value": "[[parameters('firewallRules')]",
+                                    "name": "firewallRules",
+                                    "where": {
+                                        "allOf": [
+                                            {
+                                                "field": "Microsoft.Cache/Redis/firewallRules/startIP",
+                                                "like": "[[current('firewallRules').startIP]"
+                                            },
+                                            {
+                                                "field": "Microsoft.Cache/Redis/firewallRules/endIP",
+                                                "like": "[[current('firewallRules').endIP]"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "equals": 0
+                            }
+                        ]
+                    },
+                    "then": {
+                        "effect": "deny"
+                    }
+                }
+            }
+        },
+        // Policy assignment 'Deny-Redis-FirewallRules'.
+        {
+            "name": "[uniqueString('Deny-Redis-FirewallRules')]",
+            "type": "Microsoft.Authorization/policyAssignments",
+            "apiVersion": "2020-03-01",
+            "properties": {
+                "displayName": "Deny-Redis-FirewallRules",
+                // Refer to policy definition 'Deny-Redis-FirewallRules', which should be created beforehand.
+                "policyDefinitionId": "[concat(variables('scope'), resourceId('Microsoft.Authorization/policyDefinitions', 'Deny-Redis-FirewallRules'))]",
+                "scope": "[variables('scope')]",
+                "parameters": {
+                    "firewallRules": {
+                        "value": "[parameters('firewallRules')]"
+                    }
+                },
+                "description": "Denies incompliant Redis firewall rules.",
+                "metadata": {
+                    "category": "Cache"
+                },
+                "enforcementMode": "Default"
+            },
+            "dependsOn": [
+                // Depends on policy definition 'Deny-Redis-FirewallRules', which should be created beforehand.
+                "[resourceId('Microsoft.Authorization/policyDefinitions', 'Deny-Redis-FirewallRules')]"
+            ]
+        },
+        // Policy definition 'Deploy-Redis-FirewallRule'.
+        {
+            "name": "Deploy-Redis-FirewallRule",
+            "type": "Microsoft.Authorization/policyDefinitions",
+            "apiVersion": "2020-03-01",
+            "properties": {
+                "policyType": "Custom",
+                "mode": "All",
+                "displayName": "Deploy-Redis-FirewallRule",
+                "description": "Deploys Redis firewall rule.",
+                "metadata": {
+                    "category": "Cache"
+                },
+                "parameters": {
+                    "firewallRule": {
+                        "type": "Object",
+                        "metadata": {
+                            "displayName": "Firewall Rule",
+                            "description": "The firewall rules to deploy."
+                        }
+                    }
+                },
+                "policyRule": {
+                    "if": {
+                        "field": "type",
+                        "equals": "Microsoft.Cache/Redis"
+                    },
+                    "then": {
+                        "effect": "deployIfNotExists",
+                        "details": {
+                            "type": "Microsoft.Cache/Redis/firewallRules",
+                            "roleDefinitionIds": [
+                                "[variables('roleDefinitionId')]"
+                            ],
+                            // Does the firewall rule already exist?
+                            "existenceCondition": {
+                                "allOf": [
+                                    {
+                                        "field": "Microsoft.Cache/Redis/firewallRules/startIP",
+                                        "equals": "[[parameters('firewallRule').startIP]"
+                                    },
+                                    {
+                                        "field": "Microsoft.Cache/Redis/firewallRules/endIP",
+                                        "equals": "[[parameters('firewallRule').endIP]"
+                                    }
+                                ]
+                            },
+                            "deployment": {
+                                "properties": {
+                                    "mode": "incremental",
+                                    "parameters": {
+                                        "redisName": {
+                                            "value": "[[field('name')]"
+                                        },
+                                        "firewallRule": {
+                                            "value": "[[parameters('firewallRule')]"
+                                        }
+                                    },
+                                    "template": {
+                                        "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                                        "contentVersion": "1.0.0.0",
+                                        "parameters": {
+                                            "redisName": {
+                                                "type": "string"
+                                            },
+                                            "firewallRule": {
+                                                "type": "Object"
+                                            }
+                                        },
+                                        "resources": [
+                                            {
+                                                // Child resources need to be prefixed with the name of the parent resource.
+                                                "name": "[[concat(parameters('redisName'), '/', parameters('firewallRule').name)]",
+                                                "type": "Microsoft.Cache/Redis/firewallRules",
+                                                "apiVersion": "2019-07-01",
+                                                "properties": {
+                                                    "startIP": "[[parameters('firewallRule').startIP]",
+                                                    "endIP": "[[parameters('firewallRule').endIP]"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        // Policy set definition 'Deploy-Redis-FirewallRules'
+        {
+            "name": "Deploy-Redis-FirewallRules",
+            "type": "Microsoft.Authorization/policySetDefinitions",
+            "apiVersion": "2020-03-01",
+            "properties": {
+                "policyType": "Custom",
+                "displayName": "Deploy-Redis-FirewallRules",
+                "description": "Groups policies for deploying redis firewall rules.",
+                "metadata": {
+                    "category": "Cache"
+                },
+                "parameters": {},
+                // Adds a policy definition per firewall rule
+                "copy": [
+                    {
+                        "name": "policyDefinitions",
+                        "count": "[length(parameters('firewallRules'))]",
+                        "input": {
+                            "policyDefinitionId": "[concat(variables('scope'), resourceId('Microsoft.Authorization/policyDefinitions', 'Deploy-Redis-FirewallRule'))]",
+                            "parameters": {
+                                "firewallRule": {
+                                    "value": "[parameters('firewallRules')[copyIndex('policyDefinitions')]]"
+                                }
+                            },
+                            // Grouping policies allows remediating them at once.
+                            "groupNames": [
+                                "Deploy-Redis-FirewallRules"
+                            ]
+                        }
+                    }
+                ],
+                "policyDefinitionGroups": [
+                    {
+                        "name": "Deploy-Redis-FirewallRules",
+                        "displayName": "Deploy-Redis-FirewallRules",
+                        "category": "Cache",
+                        "description": "Groups policies for deploying redis firewall rules."
+                    }
+                ]
+            },
+            "dependsOn": [
+                // Depends on policy definition 'Deploy-Redis-FirewallRule', which should be created beforehand.
+                "[resourceId('Microsoft.Authorization/policyDefinitions', 'Deploy-Redis-FirewallRule')]"
+            ]
+        },
+        // Policy set assignment 'Deploy-Redis-FirewallRule'
+        {
+            "name": "[uniqueString('Deploy-Redis-FirewallRules')]",
+            "type": "Microsoft.Authorization/policyAssignments",
+            "apiVersion": "2020-03-01",
+            "properties": {
+                "displayName": "Deploy-Redis-FirewallRules",
+                // Refer to policy set definition 'Deploy-Redis-FirewallRules', which should be created beforehand.
+                "policyDefinitionId": "[concat(variables('scope'), resourceId('Microsoft.Authorization/policySetDefinitions', 'Deploy-Redis-FirewallRules'))]",
+                "scope": "[variables('scope')]",
+                "parameters": {},
+                "description": "Groups policies for deploying redis firewall rules.",
+                "metadata": {
+                    "category": "Cache"
+                },
+                "enforcementMode": "Default"
+            },
+            "location": "northeurope",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "dependsOn": [
+                // Depends on policy set definition 'Deploy-Redis-FirewallRules', which should be created beforehand.
+                "[resourceId('Microsoft.Authorization/policySetDefinitions', 'Deploy-Redis-FirewallRules')]"
+            ]
+        },
+        // Role assignment for managed identity created during policy set assignment 'Deploy-Redis-FirewallRules'.
+        // Known issues:
+        // - Deployment fails with code 'PrincipalNotFound'. Basically, the the creation of the managed identity during policy set assignment did not finish in time. Just rerun the deployment.
+        // - Deployment fails with code 'RoleAssignmentUpdateNotPermitted'. Deleting the policy set assignment does not clean-up the role assignments. Just delete the role assignments for 'Redis Contributor' at the management group.
+        {
+            "name": "[guid('Deploy-Redis-FirewallRules')]",
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2020-04-01-preview",
+            "properties": {
+                "roleDefinitionId": "[variables('roleDefinitionId')]",
+                // Get the identifier of the managed identity created during policy set assignment 'Deploy-Redis-FirewallRules'.
+                "principalId": "[reference(uniqueString('Deploy-Redis-FirewallRules'), '2020-03-01', 'Full').identity.principalId]"
+            },
+            "dependsOn": [
+                // Depends on policy set assignment 'Deploy-Redis-FirewallRules', which should be created beforehand.
+                "[concat(variables('scope'), '/providers/Microsoft.Authorization/policyAssignments/', uniqueString('Deploy-Redis-FirewallRules'))]"
+            ]
+        }
+    ],
+    "outputs": {}
+}
