@@ -242,7 +242,7 @@ Usually, multiple firewall rules have to be deployed. While assigning the policy
                 "name": "policyDefinitions",
                 "count": "[length(parameters('firewallRules'))]",
                 "input": {
-                    "policyDefinitionId": "[concat(variables('scope'), resourceId('Microsoft.Authorization/policyDefinitions', 'Deploy-Redis-FirewallRule'))]",
+                    "policyDefinitionId": "[extensionResourceId(variables('scope'), 'Microsoft.Authorization/policyDefinitions', 'Deploy-Redis-FirewallRule'))]",
                     "parameters": {
                         "firewallRule": {
                             "value": "[parameters('firewallRules')[copyIndex('policyDefinitions')]]"
