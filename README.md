@@ -1,5 +1,5 @@
 # Azure Policy Samples
-The purpose of this repository is to collect some of my Azure Policy samples. Before applying the policies to your environment please properly check and test them. Also take a look at [Azure/Azure-Policy](https://github.com/Azure/azure-policy) and [Azure/Community-Policy](https://github.com/Azure/Community-Policy/), which are great additional sources for Azure Policy.
+The purpose of this repository is to collect some of my Azure Policy samples. Before applying the policies to your environment please properly check and test them. Also take a look at [Azure/Azure-Policy](https://github.com/Azure/azure-policy) and [Azure/Community-Policy](https://github.com/Azure/Community-Policy/), which are great additional sources for Azure Policy. Happy coding!
 
 List of samples:
 - [redis-firewallrules](./redis-firewallrules) - Deploys Redis firewall rules and denies creating incompliant firewall rules.
