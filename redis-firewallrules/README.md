@@ -1,6 +1,6 @@
 # Redis Firewall Rules
 
-Deploys Redis firewall rules and denies creating incompliant firewall rules. The policies are wrapped in an [ARM template](redis-firewallrules.json) to ease deployment. Deploying the ARM template to a management group of choice will result in the following:
+Deploys Redis firewall rules and denies creating incompliant firewall rules. The policies are wrapped in an [ARM template](redis-firewallrules.json) to ease deployment. Deploying the [ARM template](redis-firewallrules.json) to a management group of choice will result in the following:
 - **Policy Definitions**
   - **Deny-Redis-FirewallRules**: Denies creating incompliant firewall rules.
   - **Deploy-Redis-FirewallRule**: Deploys a single Redis firewall rule.
@@ -78,7 +78,7 @@ az deployment mg create --location "northeurope" --management-group-id "fawohlsc
 
 ## Known Issues
 - **PrincipalNotFound** - For remediating resources, a managed identity is created during policy assignment **Deploy-Redis-FirewallRules**. In case Azure Active Directory did not complete the provisioning of the managed identity in time, the role assignment **Deploy-Redis-FirewallRules** will fail. Just rerun the deployment to resolve the issue.
-- **RoleAssignmentUpdateNotPermitted** - When you delete the policy assignment for **Deploy-Redis-FirewallRules**, the  managed identity is deleted as well. Unfortunately, the deletion does not include the role assignment for the managed identity. Before redeploying the ARM template, You have to manually delete the role assignment marked with *Identity not found.* and role *Redis Contributor* at the management group:
+- **RoleAssignmentUpdateNotPermitted** - When you delete the policy assignment for **Deploy-Redis-FirewallRules**, the  managed identity is deleted as well. Unfortunately, the deletion does not include the role assignment for the managed identity. Before redeploying the [ARM template](redis-firewallrules.json), You have to manually delete the role assignment marked with *Identity not found.* and role *Redis Cache Contributor* at the management group:
 
    ![Management Group IAM](../IMAGES/management-group-iam.png)
 
@@ -220,7 +220,7 @@ Hence, it is not possible to leverage the [array alias](https://docs.microsoft.c
 }
 ```
 
-Usually, multiple firewall rules have to be deployed. While assigning the policy once per firewall rule is technically feasible, grouping and assigning them as policy set vastly improves manageability e.g., when reviewing compliance results.  In combination with [ARM copy](https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/copy-properties) the policy set can be dynamically composed based on the firewall rules which are passed as parameter:
+Usually, multiple firewall rules have to be deployed. While assigning the policy once per firewall rule is technically feasible, grouping and assigning them as policy set vastly improves manageability e.g., when reviewing compliance results.  In combination with [ARM copy](https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/copy-properties) the policy set can be dynamically composed based on the firewall rules which are passed as parameter to the [ARM template](redis-firewallrules.json):
 
 ```json
 // Policy set definition 'Deploy-Redis-FirewallRules'
