@@ -5,12 +5,12 @@ Deploys Redis firewall rules and denies creating incompliant firewall rules. The
   - **Deny-Redis-FirewallRules**: Denies creating incompliant firewall rules.
   - **Deploy-Redis-FirewallRule**: Deploys a single Redis firewall rule.
 - **Policy Set Definitions**
-  - **Deploy-Redis-FirewallRules**: Groups multiple instances of _Deploy-Redis-FirewallRule_ into a policy set to deploy multiple Redis firewall rules.
+  - **Deploy-Redis-FirewallRules**: Groups multiple instances of **Deploy-Redis-FirewallRule** into a policy set to deploy multiple Redis firewall rules.
 - **Policy Assignments**
-  - **Deny-Redis-FirewallRules**: Assigns policy definition _Deny-Redis-FirewallRules_ to the management group.
-  - **Deploy-Redis-FirewallRules**: Assigns policy set definition _Deploy-Redis-FirewallRules_ to the management group.
+  - **Deny-Redis-FirewallRules**: Assigns policy definition **Deny-Redis-FirewallRules** to the management group.
+  - **Deploy-Redis-FirewallRules**: Assigns policy set definition **Deploy-Redis-FirewallRules** to the management group.
 - **Role Assignments**
-   - **Deploy-Redis-FirewallRules**: Role assignment for the managed identity created during policy assignment _Deploy-Redis-FirewallRules_.
+   - **Deploy-Redis-FirewallRules**: Role assignment for the managed identity created during policy assignment **Deploy-Redis-FirewallRules**.
 
 ## Try on Portal
 
@@ -83,4 +83,190 @@ az deployment mg create --location "northeurope" --management-group-id "fawohlsc
    ![Management Group IAM](../images/management-group-iam.png)
 
 ## Notes
-- Describe that firewall rules are not nested inline properties in parent redis cache, so no array alias [*] Microsoft.Redis/firewallRules[*] - that's why policy set and copy properties https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/copy-properties
+[Firewall rules](https://docs.microsoft.com/en-us/azure/templates/microsoft.cache/redis/firewallrules) are not exposed as inline property within its parent resource [Redis](https://docs.microsoft.com/en-us/azure/templates/microsoft.cache/redis):
+
+```json
+// Redis - no property 'firewallRules'
+{
+  "name": "string",
+  "type": "Microsoft.Cache/Redis",
+  "apiVersion": "2019-07-01",
+  "properties": {
+    "redisConfiguration": {},
+    "enableNonSslPort": "boolean",
+    "replicasPerMaster": "integer",
+    "tenantSettings": {},
+    "shardCount": "integer",
+    "minimumTlsVersion": "string",
+    "sku": {
+      "name": "string",
+      "family": "string",
+      "capacity": "integer"
+    },
+    "subnetId": "string",
+    "staticIP": "string"
+  },
+  "zones": [
+    "string"
+  ],
+  "location": "string",
+  "tags": {},
+  "resources": []
+}
+
+// Firewall Rules
+{
+  "name": "string",
+  "type": "Microsoft.Cache/Redis/firewallRules",
+  "apiVersion": "2019-07-01",
+  "properties": {
+    "startIP": "string",
+    "endIP": "string"
+  }
+}
+```
+
+Hence, it is not possible to leverage the [array alias](https://docs.microsoft.com/en-us/azure/governance/policy/how-to/author-policies-for-arrays#referencing-array-fields) to easily iterate over the firewall rules within Azure Policy, e.g. ```Microsoft.Cache/Redis/firewallRules[*]```. Instead, the policy definition **Deploy-Redis-FirewallRule** had to be written to only deploy a single firewall rule:
+
+```json
+// Policy definition 'Deploy-Redis-FirewallRule'.
+{
+    "name": "Deploy-Redis-FirewallRule",
+    "type": "Microsoft.Authorization/policyDefinitions",
+    "apiVersion": "2020-03-01",
+    "properties": {
+        "policyType": "Custom",
+        "mode": "All",
+        "displayName": "Deploy-Redis-FirewallRule",
+        "description": "Deploys Redis firewall rule.",
+        "metadata": {
+            "category": "Cache"
+        },
+        "parameters": {
+            "firewallRule": {
+                "type": "Object",
+                "metadata": {
+                    "displayName": "Firewall Rule",
+                    "description": "The firewall rules to deploy."
+                }
+            }
+        },
+        "policyRule": {
+            "if": {
+                "field": "type",
+                "equals": "Microsoft.Cache/Redis"
+            },
+            "then": {
+                "effect": "deployIfNotExists",
+                "details": {
+                    "type": "Microsoft.Cache/Redis/firewallRules",
+                    "roleDefinitionIds": [
+                        "[variables('roleDefinitionId')]"
+                    ],
+                    // Does the firewall rule already exist?
+                    "existenceCondition": {
+                        "allOf": [
+                            {
+                                "field": "Microsoft.Cache/Redis/firewallRules/startIP",
+                                "equals": "[[parameters('firewallRule').startIP]"
+                            },
+                            {
+                                "field": "Microsoft.Cache/Redis/firewallRules/endIP",
+                                "equals": "[[parameters('firewallRule').endIP]"
+                            }
+                        ]
+                    },
+                    "deployment": {
+                        "properties": {
+                            "mode": "incremental",
+                            "parameters": {
+                                "redisName": {
+                                    "value": "[[field('name')]"
+                                },
+                                "firewallRule": {
+                                    "value": "[[parameters('firewallRule')]"
+                                }
+                            },
+                            "template": {
+                                "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                                "contentVersion": "1.0.0.0",
+                                "parameters": {
+                                    "redisName": {
+                                        "type": "string"
+                                    },
+                                    "firewallRule": {
+                                        "type": "Object"
+                                    }
+                                },
+                                "resources": [
+                                    {
+                                        // Child resources need to be prefixed with the name of the parent resource.
+                                        "name": "[[concat(parameters('redisName'), '/', parameters('firewallRule').name)]",
+                                        "type": "Microsoft.Cache/Redis/firewallRules",
+                                        "apiVersion": "2019-07-01",
+                                        "properties": {
+                                            "startIP": "[[parameters('firewallRule').startIP]",
+                                            "endIP": "[[parameters('firewallRule').endIP]"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+Usually, multiple firewall rules have to be deployed. While assigning the policy once per firewall rule is technically feasible, grouping and assigning them as policy set vastly improves manageability e.g., when reviewing compliance results.  In combination with [ARM copy](https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/copy-properties) the policy set can be dynamically composed based on the firewall rules which are passed as parameter:
+
+```json
+// Policy set definition 'Deploy-Redis-FirewallRules'
+{
+    "name": "Deploy-Redis-FirewallRules",
+    "type": "Microsoft.Authorization/policySetDefinitions",
+    "apiVersion": "2020-03-01",
+    "properties": {
+        "policyType": "Custom",
+        "displayName": "Deploy-Redis-FirewallRules",
+        "description": "Groups policies for deploying redis firewall rules.",
+        "metadata": {
+            "category": "Cache"
+        },
+        "parameters": {},
+        // Adds a policy definition per firewall rule
+        "copy": [
+            {
+                "name": "policyDefinitions",
+                "count": "[length(parameters('firewallRules'))]",
+                "input": {
+                    "policyDefinitionId": "[concat(variables('scope'), resourceId('Microsoft.Authorization/policyDefinitions', 'Deploy-Redis-FirewallRule'))]",
+                    "parameters": {
+                        "firewallRule": {
+                            "value": "[parameters('firewallRules')[copyIndex('policyDefinitions')]]"
+                        }
+                    },
+                    // Grouping policies eases reviewing compliance results.
+                    "groupNames": [
+                        "Deploy-Redis-FirewallRules"
+                    ]
+                }
+            }
+        ],
+        "policyDefinitionGroups": [
+            {
+                "name": "Deploy-Redis-FirewallRules",
+                "displayName": "Deploy-Redis-FirewallRules",
+                "category": "Cache",
+                "description": "Groups policies for deploying redis firewall rules."
+            }
+        ]
+    },
+    "dependsOn": [
+        // Depends on policy definition 'Deploy-Redis-FirewallRule', which should be created beforehand.
+        "[extensionResourceId(variables('scope'), 'Microsoft.Authorization/policyDefinitions', 'Deploy-Redis-FirewallRule')]"
+    ]
+}
+```

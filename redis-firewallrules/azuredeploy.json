@@ -241,7 +241,7 @@
                                     "value": "[parameters('firewallRules')[copyIndex('policyDefinitions')]]"
                                 }
                             },
-                            // Grouping policies allows remediating them at once.
+                            // Grouping policies eases reviewing compliance results.
                             "groupNames": [
                                 "Deploy-Redis-FirewallRules"
                             ]
