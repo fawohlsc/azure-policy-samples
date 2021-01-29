@@ -109,7 +109,7 @@
             "properties": {
                 "displayName": "Deny-Redis-FirewallRules",
                 // Refer to policy definition 'Deny-Redis-FirewallRules', which should be created beforehand.
-                "policyDefinitionId": "[concat(variables('scope'), resourceId('Microsoft.Authorization/policyDefinitions', 'Deny-Redis-FirewallRules'))]",
+                "policyDefinitionId": "[concat(variables('scope'), extensionResourceId(variables('scope'), 'Microsoft.Authorization/policyDefinitions', 'Deny-Redis-FirewallRules'))]",
                 "scope": "[variables('scope')]",
                 "parameters": {
                     "firewallRules": {
@@ -235,7 +235,7 @@
                         "name": "policyDefinitions",
                         "count": "[length(parameters('firewallRules'))]",
                         "input": {
-                            "policyDefinitionId": "[concat(variables('scope'), resourceId('Microsoft.Authorization/policyDefinitions', 'Deploy-Redis-FirewallRule'))]",
+                            "policyDefinitionId": "[concat(variables('scope'), extensionResourceId(variables('scope'), 'Microsoft.Authorization/policyDefinitions', 'Deploy-Redis-FirewallRule'))]",
                             "parameters": {
                                 "firewallRule": {
                                     "value": "[parameters('firewallRules')[copyIndex('policyDefinitions')]]"
@@ -270,7 +270,7 @@
             "properties": {
                 "displayName": "Deploy-Redis-FirewallRules",
                 // Refer to policy set definition 'Deploy-Redis-FirewallRules', which should be created beforehand.
-                "policyDefinitionId": "[concat(variables('scope'), resourceId('Microsoft.Authorization/policySetDefinitions', 'Deploy-Redis-FirewallRules'))]",
+                "policyDefinitionId": "[concat(variables('scope'), extensionResourceId(variables('scope'), 'Microsoft.Authorization/policySetDefinitions', 'Deploy-Redis-FirewallRules'))]",
                 "scope": "[variables('scope')]",
                 "parameters": {},
                 "description": "Groups policies for deploying redis firewall rules.",
