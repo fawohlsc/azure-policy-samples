@@ -235,7 +235,7 @@
                         "name": "policyDefinitions",
                         "count": "[length(parameters('firewallRules'))]",
                         "input": {
-                            "policyDefinitionId": "[concat(variables('scope'), extensionResourceId(variables('scope'), 'Microsoft.Authorization/policyDefinitions', 'Deploy-Redis-FirewallRule'))]",
+                            "policyDefinitionId": "[extensionResourceId(variables('scope'), 'Microsoft.Authorization/policyDefinitions', 'Deploy-Redis-FirewallRule')]",
                             "parameters": {
                                 "firewallRule": {
                                     "value": "[parameters('firewallRules')[copyIndex('policyDefinitions')]]"
