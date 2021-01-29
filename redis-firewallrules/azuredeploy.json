@@ -4,6 +4,7 @@
     "parameters": {
         "managementGroup": {
             "type": "string",
+            "defaultValue": "[deployment().location]",
             "metadata": {
                 "displayName": "Management Group",
                 "description": "The management group to scope the policy definitions, the policy set definition and the policy assignment."

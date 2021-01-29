@@ -1,9 +1,9 @@
 # Redis Firewall Rules
 
-Deploys Redis firewall rules and denies creating incompliant firewall rules. The policies are wrapped in an [ARM template](redis-firewallrules.json) to ease deployment. Deploying the ARM template to a management group of choice should result in the following:
+Deploys Redis firewall rules and denies creating incompliant firewall rules. The policies are wrapped in an [ARM template](redis-firewallrules.json) to ease deployment. Deploying the ARM template to a management group of choice will result in the following:
 - **Policy Definitions**
   - **Deny-Redis-FirewallRules**: Denies creating incompliant firewall rules.
-  - **Deploy-Redis-FirewallRules**: Deploys a single Redis firewall rule.
+  - **Deploy-Redis-FirewallRule**: Deploys a single Redis firewall rule.
 - **Policy Set Definitions**
   - **Deploy-Redis-FirewallRules**: Groups multiple instances of _Deploy-Redis-FirewallRule_ into a policy set to deploy multiple Redis firewall rules.
 - **Policy Assignments**
