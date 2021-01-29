@@ -6,7 +6,7 @@
             "type": "string",
             "metadata": {
                 "displayName": "Management Group",
-                "description": "The management group to scope the policy definitions, the policy set definition and the policy assignment."
+                "description": "The management group to scope the policy definitions, the policy set definitions and the policy assignments."
             }
         },
         "firewallRules": {
