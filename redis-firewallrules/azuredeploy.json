@@ -29,7 +29,6 @@
             }
         }
     },
-    "functions": [],
     "variables": {
         "scope": "[concat('/providers/Microsoft.Management/managementGroups/', parameters('managementGroup'))]",
         // Built-in role 'Redis Contributor'.
@@ -125,7 +124,7 @@
             },
             "dependsOn": [
                 // Depends on policy definition 'Deny-Redis-FirewallRules', which should be created beforehand.
-                "[resourceId('Microsoft.Authorization/policyDefinitions', 'Deny-Redis-FirewallRules')]"
+                "[extensionResourceId(variables('scope'), 'Microsoft.Authorization/policyDefinitions', 'Deny-Redis-FirewallRules')]"
             ]
         },
         // Policy definition 'Deploy-Redis-FirewallRule'.
@@ -260,7 +259,7 @@
             },
             "dependsOn": [
                 // Depends on policy definition 'Deploy-Redis-FirewallRule', which should be created beforehand.
-                "[resourceId('Microsoft.Authorization/policyDefinitions', 'Deploy-Redis-FirewallRule')]"
+                "[extensionResourceId(variables('scope'), 'Microsoft.Authorization/policyDefinitions', 'Deploy-Redis-FirewallRule')]"
             ]
         },
         // policy assignment 'Deploy-Redis-FirewallRule'
@@ -286,13 +285,10 @@
             },
             "dependsOn": [
                 // Depends on policy set definition 'Deploy-Redis-FirewallRules', which should be created beforehand.
-                "[resourceId('Microsoft.Authorization/policySetDefinitions', 'Deploy-Redis-FirewallRules')]"
+                "[extensionResourceId(variables('scope'), 'Microsoft.Authorization/policySetDefinitions', 'Deploy-Redis-FirewallRules')]"
             ]
         },
         // Role assignment for managed identity created during policy assignment 'Deploy-Redis-FirewallRules'.
-        // Known issues:
-        // - Deployment fails with code 'PrincipalNotFound'. Basically, the the creation of the managed identity during policy assignment did not finish in time. Just rerun the deployment.
-        // - Deployment fails with code 'RoleAssignmentUpdateNotPermitted'. Deleting the policy assignment does not clean-up the role assignments. Just delete the role assignments for 'Redis Contributor' at the management group.
         {
             "name": "[guid('Deploy-Redis-FirewallRules')]",
             "type": "Microsoft.Authorization/roleAssignments",
@@ -304,7 +300,7 @@
             },
             "dependsOn": [
                 // Depends on policy assignment 'Deploy-Redis-FirewallRules', which should be created beforehand.
-                "[concat(variables('scope'), '/providers/Microsoft.Authorization/policyAssignments/', uniqueString('Deploy-Redis-FirewallRules'))]"
+                "[extensionResourceId(variables('scope'), 'Microsoft.Authorization/policyAssignments', uniqueString('Deploy-Redis-FirewallRules'))]"
             ]
         }
     ],
