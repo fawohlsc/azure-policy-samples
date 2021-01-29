@@ -12,6 +12,18 @@
         },
         "firewallRules": {
             "type": "Array",
+            "defaultValue": [
+                {
+                    "name": "rule1",
+                    "startIP": "10.0.0.0",
+                    "endIP": "10.1.0.0"
+                },
+                {
+                    "name": "rule2",
+                    "startIP": "20.0.0.0",
+                    "endIP": "20.2.0.0"
+                }
+            ],
             "metadata": {
                 "displayName": "Firewall Rules",
                 "description": "The list of allowed firewall rules."
