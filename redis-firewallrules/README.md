@@ -77,7 +77,6 @@ az deployment mg create --location "northeurope" --management-group-id "fawohlsc
 > In case you face any errors during deployment, please see [Known Issues](#known-issues).
 
 ## Known Issues
-- **PrincipalNotFound** - For remediating resources, a managed identity is created during policy assignment **Deploy-Redis-FirewallRules**. In case Azure Active Directory did not complete the provisioning of the managed identity in time, the role assignment **Deploy-Redis-FirewallRules** will fail. Just rerun the deployment to resolve the issue.
 - **RoleAssignmentUpdateNotPermitted** - When you delete the policy assignment for **Deploy-Redis-FirewallRules**, the  managed identity is deleted as well. Unfortunately, the deletion does not include the role assignment for the managed identity. Before redeploying the [ARM template](azuredeploy.json), You have to manually delete the role assignment marked with *Identity not found.* and role *Redis Cache Contributor* at the management group:
 
    ![Management Group IAM](../IMAGES/management-group-iam.png)
