@@ -220,7 +220,7 @@ Hence, it is not possible to leverage the [array alias](https://docs.microsoft.c
 }
 ```
 
-Usually, multiple firewall rules have to be deployed. While assigning the policy once per firewall rule is technically feasible, grouping and assigning them as policy set vastly improves manageability e.g., when reviewing compliance results.  In combination with [ARM copy](https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/copy-properties) the policy set can be dynamically composed based on the firewall rules which are passed as parameter to the [ARM template](azuredeploy.json):
+Usually, multiple firewall rules have to be deployed. While assigning the policy once per firewall rule is technically feasible, grouping and assigning them as policy set vastly improves manageability e.g., when reviewing compliance results.  In combination with [ARM copy](https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/copy-properties) the policy set can be dynamically generated based on the firewall rules which are passed as parameter to the [ARM template](azuredeploy.json):
 
 ```json
 // Policy set definition 'Deploy-Redis-FirewallRules'
