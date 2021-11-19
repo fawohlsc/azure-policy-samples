@@ -9,6 +9,14 @@
                 "description": "The management group to scope the policy definitions, the policy set definitions and the policy assignments."
             }
         },
+		"roleAssignmentName": {
+            "type": "string",
+            "defaultValue": "[newGuid()]",
+            "metadata": {
+				"displayName": "Role Assignment Name",
+                "description": "This template is not idempotent unless the same role assignment name is provided as a parameter for each deployment of the template. "
+            }
+        },
         "firewallRules": {
             "type": "Array",
             "defaultValue": [
@@ -290,7 +298,7 @@
         },
         // Role assignment for managed identity created during policy assignment 'Deploy-Redis-FirewallRules'.
         {
-            "name": "[guid('Deploy-Redis-FirewallRules')]",
+            "name": "[parameters('roleAssignmentName')]",
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2020-04-01-preview",
             "properties": {
