@@ -13,7 +13,7 @@
             "type": "string",
             "defaultValue": "[newGuid()]",
             "metadata": {
-				"displayName": "Role Assignment Name",
+		"displayName": "Role Assignment Name",
                 "description": "This template is not idempotent unless the same role assignment name is provided as a parameter for each deployment of the template. "
             }
         },
