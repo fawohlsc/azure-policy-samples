@@ -9,7 +9,7 @@
                 "description": "The management group to scope the policy definitions, the policy set definitions and the policy assignments."
             }
         },
-		"roleAssignmentName": {
+	"roleAssignmentName": {
             "type": "string",
             "defaultValue": "[newGuid()]",
             "metadata": {
